@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { UserSearch, Activity, Inbox, Workflow } from 'lucide-react';
 import type { DrawerType } from '../types';
+import { fetchSequences, fetchIntentSignals, fetchImportantReplies } from '../services/graph8Client';
 
 interface QuickActionsProps {
   onOpenDrawer: (type: DrawerType, data?: any) => void;
@@ -11,12 +12,65 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   onOpenDrawer,
   activeDrawerType
 }) => {
+  const [sequenceCount, setSequenceCount] = useState<number>(4);
+  const [signalsCount, setSignalsCount] = useState<number>(4);
+  const [inboxCount, setInboxCount] = useState<number>(2);
+  const [prospectsCount] = useState<number>(4);
+
+  const loadTelemetryCounts = useCallback(async () => {
+    try {
+      const seqs = await fetchSequences();
+      if (Array.isArray(seqs) && seqs.length > 0) {
+        // Enrolled contacts in primary cadence or total across active sequences
+        const activeCadenceContacts = seqs[0]?.contacts?.length;
+        const totalEnrolled = typeof activeCadenceContacts === 'number'
+          ? activeCadenceContacts
+          : seqs.reduce((sum, s) => sum + (s.contacts ? s.contacts.length : (s.contactCount || 0)), 0);
+
+        if (totalEnrolled > 0) {
+          setSequenceCount(totalEnrolled);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to refresh sequence count:', e);
+    }
+
+    try {
+      const sigs = await fetchIntentSignals();
+      if (Array.isArray(sigs) && sigs.length > 0) {
+        setSignalsCount(sigs.length);
+      }
+    } catch {}
+
+    try {
+      const reps = await fetchImportantReplies();
+      if (Array.isArray(reps) && reps.length > 0) {
+        setInboxCount(reps.length);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    loadTelemetryCounts();
+
+    // Listen to real-time sequence enrollment events triggered anywhere across the app
+    const handleEnrollment = () => {
+      setSequenceCount((prev) => prev + 1);
+      loadTelemetryCounts();
+    };
+
+    window.addEventListener('graph8:sequence-enrolled', handleEnrollment);
+    return () => {
+      window.removeEventListener('graph8:sequence-enrolled', handleEnrollment);
+    };
+  }, [loadTelemetryCounts]);
+
   const actions = [
     {
       id: 'quick_prospects' as DrawerType,
       label: 'Find Prospects',
       icon: UserSearch,
-      count: 4,
+      count: prospectsCount,
       badgeColor: 'text-sky-700 bg-sky-50 border-sky-200',
       iconColor: 'text-sky-500'
     },
@@ -24,7 +78,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       id: 'quick_signals' as DrawerType,
       label: 'Intent Signals',
       icon: Activity,
-      count: 18,
+      count: signalsCount,
       badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-200',
       iconColor: 'text-emerald-500',
       hasPulse: true
@@ -33,7 +87,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       id: 'quick_inbox' as DrawerType,
       label: 'Inbox',
       icon: Inbox,
-      count: 6,
+      count: inboxCount,
       badgeColor: 'text-purple-700 bg-purple-50 border-purple-200',
       iconColor: 'text-purple-500'
     },
@@ -41,7 +95,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       id: 'quick_sequences' as DrawerType,
       label: 'Sequences',
       icon: Workflow,
-      count: 3,
+      count: sequenceCount,
       badgeColor: 'text-pink-700 bg-pink-50 border-pink-200',
       iconColor: 'text-pink-500'
     }

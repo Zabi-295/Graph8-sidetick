@@ -713,6 +713,30 @@ export interface Graph8Sequence {
 // In-memory persistent store for sequence enrolled contacts
 export const enrolledContactsStore: EnrolledContact[] = [
   {
+    id: 'enrolled-live-1',
+    contactId: 'g8-sig-1',
+    name: 'John McAdoo',
+    role: 'Chief Financial Officer',
+    company: 'Wayflyer',
+    email: 'j.mcadoo@wayflyer.com',
+    phone: '+1 (415) 604-1290',
+    state: 'queued',
+    step: 'Step 1: Personalized Intro Email (Queued)',
+    enrolledAt: 'Just now'
+  },
+  {
+    id: 'enrolled-live-2',
+    contactId: 'g8-sig-2',
+    name: 'John Hooyman',
+    role: 'VP Marketing & Operations',
+    company: 'Sentry Telemetry',
+    email: 'john.hooyman@sentry.io',
+    phone: '+1 (650) 934-2100',
+    state: 'queued',
+    step: 'Step 1: Personalized Intro Email (Queued)',
+    enrolledAt: '12m ago'
+  },
+  {
     id: 'g8-sc-250',
     contactId: 250,
     name: 'Barry Peraino',
