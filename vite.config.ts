@@ -244,7 +244,6 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    base: './',
     plugins: [
       react(),
       graph8ApiPlugin(env.GRAPH8_API_KEY)

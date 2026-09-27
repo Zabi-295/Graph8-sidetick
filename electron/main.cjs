@@ -99,7 +99,8 @@ function startInternalServer(callback) {
   const distDir = path.join(__dirname, '..', 'dist');
 
   serverInstance = http.createServer(async (req, res) => {
-    const token = process.env.GRAPH8_API_KEY || '';
+    const DEFAULT_API_KEY = '589ae5fd8d22789cc9b4db70966375c12f777201d6c86474ceca7873342dcf76596fe13ebe8c2cadaaa1a0fdbd10a9e3';
+    const token = process.env.GRAPH8_API_KEY || DEFAULT_API_KEY;
 
     // Enable CORS for localhost
     res.setHeader('Access-Control-Allow-Origin', '*');
