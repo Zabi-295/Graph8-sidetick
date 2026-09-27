@@ -21,7 +21,7 @@ import { DemoLabDrawer } from './components/drawers/DemoLabDrawer';
 import { ActionConfirmModal } from './components/modals/ActionConfirmModal';
 import { LiveDemoNotification, type DemoAlertData } from './components/modals/LiveDemoNotification';
 import { checkGraph8Status, executeAddToSequence, type Graph8StatusResponse } from './services/graph8Client';
-import { listenToDemoTrigger, sendRemoteDemoTrigger } from './services/demoRemote';
+import { listenToDemoTrigger } from './services/demoRemote';
 
 import {
   mockHighIntentCard,
@@ -34,12 +34,11 @@ import type { DrawerType, DrawerState } from './types';
 import { Zap, Sparkles, Inbox } from 'lucide-react';
 
 export function App() {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const isElectron = typeof window !== 'undefined' && Boolean((window as any).electronAPI?.isElectron);
+  const [isExpanded, setIsExpanded] = useState(!isElectron);
   const [isPinned, setIsPinned] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [mainTab, setMainTab] = useState<'signals' | 'replies' | 'moves'>('signals');
-
-  const isElectron = typeof window !== 'undefined' && Boolean((window as any).electronAPI?.isElectron);
 
   // Sync window expand/collapse with Electron native window
   useEffect(() => {
@@ -509,27 +508,12 @@ export function App() {
     return () => window.removeEventListener('mousedown', handleOutsideClick);
   }, [isExpanded, isPinned, drawer.isOpen]);
 
-  // 1. Browser mode (localhost:5175): Pure Executive Dashboard with Live Remote Control Station!
-  // No floating button and no secondary companion on the webpage.
-  if (!isElectron) {
-    return (
-      <div className="relative w-screen h-screen overflow-hidden bg-slate-50 font-sans antialiased">
-        <DesktopSimulator
-          onSimulateCall={() => sendRemoteDemoTrigger('call')}
-          onSimulateReply={() => sendRemoteDemoTrigger('reply')}
-          onSimulateSignal={() => sendRemoteDemoTrigger('signal')}
-        />
-      </div>
-    );
-  }
-
-  // 2. Desktop Electron Companion: Pure floating companion with 3-second auto-transparency
-  return (
+  const companionNode = (
     <div
       onPointerMove={resetIdleTimer}
       onMouseEnter={resetIdleTimer}
-      className={`relative w-screen h-screen overflow-hidden bg-transparent font-sans antialiased transition-opacity duration-700 ${
-        isIdle && !demoAlert ? 'opacity-40 hover:opacity-100' : 'opacity-100'
+      className={`relative w-full h-full overflow-hidden bg-transparent font-sans antialiased transition-opacity duration-700 ${
+        isIdle && !demoAlert && isElectron ? 'opacity-40 hover:opacity-100' : 'opacity-100'
       }`}
     >
       {/* State 1: Collapsed Pill (Idle) - Clean floating pill centered in window */}
@@ -602,8 +586,8 @@ export function App() {
             e.stopPropagation();
             resetIdleTimer();
           }}
-          style={{ width: '100%', height: '100%', left: 0, top: 0 }}
-          className="fixed z-40 select-none top-0 left-0 w-full h-full flex flex-col bg-transparent p-2"
+          style={isElectron ? { width: '100%', height: '100%', left: 0, top: 0 } : undefined}
+          className={`${isElectron ? 'fixed z-40 top-0 left-0 w-full h-full p-2' : 'relative w-full h-full p-1'} select-none flex flex-col bg-transparent`}
         >
           {/* Subtle Accent Glow Ring & Shadow */}
           <div className="relative p-[1px] rounded-[20px] bg-gradient-to-b from-purple-200/90 via-slate-200/80 to-purple-200/60 shadow-2xl backdrop-blur-2xl w-full h-full">
@@ -973,6 +957,35 @@ export function App() {
         onConfirm={confirmModal.onConfirm}
         onSuccessCallback={confirmModal.onSuccessCallback}
       />
+    </div>
+  );
+
+  // In Web Browser (e.g. Vercel deployment): Render Desktop Simulator + Floating Interactive Companion
+  if (!isElectron) {
+    return (
+      <div className="relative w-screen h-screen overflow-hidden bg-slate-50 font-sans antialiased">
+        <DesktopSimulator
+          onSimulateCall={handleSimulateCall}
+          onSimulateReply={handleSimulateReply}
+          onSimulateSignal={handleSimulateSignal}
+        />
+        <div
+          className={`fixed z-50 transition-all duration-300 ${
+            isExpanded
+              ? 'bottom-3 right-3 sm:bottom-6 sm:right-6 w-[430px] h-[720px] max-h-[94vh] max-w-[96vw]'
+              : 'bottom-6 right-6 flex flex-col items-end'
+          }`}
+        >
+          {companionNode}
+        </div>
+      </div>
+    );
+  }
+
+  // In Electron Desktop Mode: Pure frameless companion
+  return (
+    <div className="relative w-screen h-screen overflow-hidden bg-transparent font-sans antialiased">
+      {companionNode}
     </div>
   );
 }
