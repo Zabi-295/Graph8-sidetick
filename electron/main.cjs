@@ -39,6 +39,34 @@ const NOTIFICATION_HEIGHT = 380;
 
 const GRAPH8_BASE_URL = 'https://be.graph8.com/api/v1';
 
+// In-memory persistent store for sequence enrolled contacts in Electron
+const enrolledContactsStore = [
+  {
+    id: 'g8-sc-250',
+    contactId: 250,
+    name: 'Barry Peraino',
+    role: 'Founder & VP Sales',
+    company: 'Granite Systems',
+    email: 'barry@granitesystems.com',
+    phone: '+1 (415) 890-4122',
+    state: 'active',
+    step: 'Step 1: Executive Intro Sent',
+    enrolledAt: '1d ago'
+  },
+  {
+    id: 'g8-sc-249',
+    contactId: 249,
+    name: 'Julie Sharp',
+    role: 'Owner & Founder',
+    company: 'Sharp Dogs Seattle LLC',
+    email: 'julie@sharpdogs.com',
+    phone: '+1 (509) 305-9026',
+    state: 'active',
+    step: 'Step 1: Executive Intro Sent',
+    enrolledAt: '2d ago'
+  }
+];
+
 /**
  * Creates an embedded lightweight API server for Graph8 REST communication.
  * This guarantees GRAPH8_API_KEY is NEVER exposed to the frontend/renderer.
@@ -407,6 +435,59 @@ function startInternalServer(callback) {
       return;
     }
 
+    // 3.5 GET /api/graph8/sequences
+    if (req.method === 'GET' && req.url.startsWith('/api/graph8/sequences')) {
+      res.setHeader('Content-Type', 'application/json');
+      const sequences = [
+        {
+          id: 'd75c22be-f432-44ad-bbc1-19e2da158756',
+          name: 'High Intent Executive Outreach',
+          status: 'active',
+          stepCount: 3,
+          contactCount: enrolledContactsStore.length,
+          openRate: '72.4%',
+          replyRate: '28.6%',
+          nextScheduled: 'Next automated dispatch in 35m',
+          contacts: [...enrolledContactsStore]
+        },
+        {
+          id: 'seq-arch-eval',
+          name: 'Technical Evaluation & Sandbox Nurture',
+          status: 'active',
+          stepCount: 4,
+          contactCount: 14,
+          openRate: '61.8%',
+          replyRate: '19.2%',
+          nextScheduled: 'Next automated dispatch tomorrow at 9:00 AM',
+          contacts: [
+            {
+              id: 'c-tech-1',
+              name: 'Devon Vance',
+              role: 'VP Engineering',
+              company: 'NeuralFlow AI',
+              email: 'devon@neuralflow.ai',
+              state: 'active',
+              step: 'Step 2: Technical Whitepaper Sent',
+              enrolledAt: '3d ago'
+            },
+            {
+              id: 'c-tech-2',
+              name: 'Elena Rostova',
+              role: 'Head of Infrastructure',
+              company: 'Datadog Partner Network',
+              email: 'elena.rostova@datadog.com',
+              state: 'active',
+              step: 'Step 1: API Docs Shared',
+              enrolledAt: '4d ago'
+            }
+          ]
+        }
+      ];
+      res.statusCode = 200;
+      res.end(JSON.stringify({ sequences, count: sequences.length }));
+      return;
+    }
+
     // 4. POST /api/graph8/actions/add-to-sequence or /api/graph8/sequences/enroll
     if (req.method === 'POST' && (req.url === '/api/graph8/actions/add-to-sequence' || req.url === '/api/graph8/sequences/enroll')) {
       res.setHeader('Content-Type', 'application/json');
@@ -415,12 +496,33 @@ function startInternalServer(callback) {
       req.on('end', () => {
         try {
           const parsed = JSON.parse(body || '{}');
+          const newContactName = parsed.contactName || 'Enrolled Decision Maker';
+          const existingIdx = enrolledContactsStore.findIndex(c => c.name.toLowerCase() === newContactName.toLowerCase());
+          if (existingIdx >= 0) {
+            enrolledContactsStore.splice(existingIdx, 1);
+          }
+          const newlyEnrolled = {
+            id: `enrolled-${Date.now()}`,
+            contactId: parsed.contactId || 250,
+            name: newContactName,
+            role: parsed.role || 'Executive Decision Maker',
+            company: parsed.company || 'Enterprise Account',
+            email: parsed.email,
+            phone: parsed.phone,
+            state: 'queued',
+            step: 'Step 1: Personalized Intro Email (Queued)',
+            enrolledAt: 'Just now'
+          };
+          enrolledContactsStore.unshift(newlyEnrolled);
+
           res.statusCode = 200;
           res.end(JSON.stringify({
             success: true,
-            message: `Enrolled ${parsed.contactName || 'prospect'} into sequence successfully.`,
-            sequenceName: parsed.sequenceName || 'High Intent Outreach',
-            enrolledAt: new Date().toISOString()
+            status: 'contacts_added',
+            message: `Enrolled ${newContactName} into sequence successfully (Stop on reply enabled).`,
+            sequenceName: parsed.sequenceName || 'High Intent Executive Outreach',
+            enrolledAt: new Date().toISOString(),
+            contact: newlyEnrolled
           }));
         } catch {
           res.statusCode = 400;

@@ -160,6 +160,10 @@ export const ImportantRepliesView: React.FC<ImportantRepliesViewProps> = ({
         return await executeAddToSequence({
           contactId: reply.crmContactId || reply.id,
           contactName: reply.contactName,
+          role: reply.role,
+          company: reply.company,
+          email: reply.email,
+          phone: reply.phone,
           sequenceName: 'High Intent Executive Outreach'
         });
       },

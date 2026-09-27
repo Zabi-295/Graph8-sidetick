@@ -122,6 +122,10 @@ export const IntentSignalsView: React.FC<IntentSignalsViewProps> = ({
         return await executeAddToSequence({
           contactId: signal.crmContactId || signal.id,
           contactName: signal.contactName,
+          role: signal.role,
+          company: signal.company,
+          email: signal.email,
+          phone: signal.phone,
           sequenceName: 'High Intent Executive Outreach'
         });
       },

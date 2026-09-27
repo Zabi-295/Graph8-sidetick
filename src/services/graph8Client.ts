@@ -168,6 +168,10 @@ export interface SequenceActionRequest {
   sequenceId?: string;
   sequenceName?: string;
   listId?: number;
+  role?: string;
+  company?: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface SequenceActionResult {
@@ -229,6 +233,16 @@ export async function executeAddToSequence(req: SequenceActionRequest): Promise<
     });
 
     const data = await response.json();
+    if (data.success && typeof window !== 'undefined') {
+      // Broadcast live event so Sequence drawer and status counters update immediately
+      window.dispatchEvent(new CustomEvent('graph8:sequence-enrolled', {
+        detail: {
+          ...req,
+          ...data,
+          timestamp: new Date().toISOString()
+        }
+      }));
+    }
     return data;
   } catch (error: any) {
     return {

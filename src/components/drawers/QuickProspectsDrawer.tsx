@@ -85,7 +85,12 @@ export const QuickProspectsDrawer: React.FC<QuickProspectsDrawerProps> = ({
     try {
       await executeAddToSequence({
         contactId: prospect.id,
-        contactName: prospect.name || prospect.contactName
+        contactName: prospect.name || prospect.contactName,
+        role: prospect.role || prospect.title || 'Executive Decision Maker',
+        company: prospect.company || 'Enterprise Account',
+        email: prospect.email,
+        phone: prospect.phone,
+        sequenceName: 'High Intent Executive Outreach'
       });
     } catch (err) {
       console.warn('Sequence enrollment fallback applied:', err);

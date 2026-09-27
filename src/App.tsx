@@ -386,6 +386,10 @@ export function App() {
         return await executeAddToSequence({
           contactId: contact.crmContactId || contact.id || 250,
           contactName: contact.contactName || 'Prospect',
+          role: contact.role || 'Executive Decision Maker',
+          company: contact.company || 'Enterprise Account',
+          email: contact.email,
+          phone: contact.phone,
           sequenceName: 'High Intent Executive Outreach'
         });
       },
