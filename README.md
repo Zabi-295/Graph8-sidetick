@@ -9,6 +9,15 @@
 
 ---
 
+## 🌐 Live Deployment & Links
+
+* 🔗 **Live Web Demo (GitHub Pages):** [https://zabi-295.github.io/Graph8-sidetick/](https://zabi-295.github.io/Graph8-sidetick/)
+* ⚡ **1-Click Deploy to Vercel:** [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FZabi-295%2FGraph8-sidetick)
+* 📦 **GitHub Repository:** [https://github.com/Zabi-295/Graph8-sidetick](https://github.com/Zabi-295/Graph8-sidetick)
+* 💻 **Windows Desktop Executable (.exe):** Built and packaged in `release/Graph8Sidekick-win32-x64/Graph8Sidekick.exe` (Portable zip available: `release/Graph8Sidekick-Windows.zip`)
+
+---
+
 ## 🌟 Overview
 
 B2B sales reps lose up to 4 hours every day switching between CRM tabs, Apollo, LinkedIn, inbox threads, and VoIP dialers. **Graph8 Sidekick** lives right on the desktop as an ambient, non-intrusive floating pill that expands into a full command center (`Ctrl+K`).
